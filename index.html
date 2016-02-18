@@ -1,0 +1,58 @@
+<script src="aes.js"></script>
+<script src="sha256.js"></script>
+<script src="Base64.js"></script>
+<script src="pad-zeropadding-min.js"></script>
+<script type="text/javascript">
+
+var data = "123456 支持中文 mobile=123456&password=123";
+var key =  "1DSwYXbLYnzrzI6zcz4DygINXKrfbDdC";
+data = '';
+/*
+var base64 = Base64.encode(data) ;
+console.log('data: ' + data); 
+console.log( 'base64.encode:  ' + base64);
+console.log('base64.decode:  ' + Base64.decode( base64) ); 
+*/
+
+document.write('data: ' + data + "<br />");
+// 加密
+var ase = AESEncrypt(data, key);
+document.write('AESEncrypt: ' + ase + "<br />");
+
+// 解密
+document.write('AESDecrypt: ' + AESDecrypt(ase, key) );
+
+// ===================================================
+function AESEncrypt(data, key){
+	
+	var block = 16;
+	var dataBase64 = Base64.encode(data).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+	var length = dataBase64.length % block;
+	var pad = block - length;
+	dataBase64 += new Array( pad + 1 ).join(  String.fromCharCode(pad) );
+
+	key  = CryptoJS.enc.Hex.parse( CryptoJS.SHA256(key).toString() );
+	var iv   = CryptoJS.enc.Latin1.parse('');
+
+	return  CryptoJS.AES.encrypt(dataBase64, key,{iv:iv,mode:CryptoJS.mode.CBC,padding:CryptoJS.pad.ZeroPadding}).toString();
+	
+}
+
+function AESDecrypt(data, key){
+
+	key  = CryptoJS.enc.Hex.parse( CryptoJS.SHA256( key ).toString() );
+	var iv   = CryptoJS.enc.Latin1.parse('');
+
+	var decrypted = CryptoJS.AES.decrypt(data, key, {iv:iv,padding:CryptoJS.pad.ZeroPadding});
+	var dataBase64 =  decrypted.toString(CryptoJS.enc.Utf8);
+	dataBase64 = dataBase64.replace(/-/g, "+").replace(/_/g, "/");
+
+	var length = dataBase64.length;
+	var slast = dataBase64.charAt(length-1).charCodeAt();
+
+	return Base64.decode( dataBase64.substr(0, length-slast) );
+
+}
+
+</script>
